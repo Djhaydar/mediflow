@@ -1,0 +1,72 @@
+{
+  "name": "mediflow",
+  "productName": "MediFlow",
+  "private": true,
+  "version": "2.0.0",
+  "description": "Logiciel de gestion de cabinet médical",
+  "author": "Dr. DJERMANE Ammar",
+  "main": "electron/main.cjs",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron:dev": "vite build && electron .",
+    "electron:build": "vite build && electron-builder --win",
+    "release": "node scripts/release.cjs"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "recharts": "^2.10.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.0",
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3",
+    "vite": "^5.0.0"
+  },
+  "build": {
+    "appId": "com.djermane.mediflow",
+    "productName": "MediFlow",
+    "copyright": "Dr. DJERMANE Ammar — Oum El Bouaghi",
+    "directories": {
+      "output": "dist_electron",
+      "buildResources": "electron/assets"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/main.cjs"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "MediFlow",
+      "installerHeaderIcon": "electron/assets/icon.ico",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}.exe"
+    }
+  }
+}

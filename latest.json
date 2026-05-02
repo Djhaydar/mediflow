@@ -1,0 +1,13 @@
+{
+  "version": "2.0.0",
+  "date": "2026-05-02",
+  "notes": [
+    "Base de médicaments complète (115 médicaments algériens/français)",
+    "Ordonnance : boutons rapides fréquence et durée",
+    "Bilan biologique avec cases à cocher",
+    "En-tête bilingue FR+AR sur tous les papiers médicaux",
+    "Paramètres : nom arabe, spécialité, N° d'ordre",
+    "Application Desktop (double-clic pour ouvrir)"
+  ],
+  "url": "https://github.com/Djhaydar/mediflow/releases/latest"
+}

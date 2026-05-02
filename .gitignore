@@ -1,0 +1,7 @@
+node_modules/
+dist/
+dist_electron/
+*.log
+.env
+.DS_Store
+electron/assets/icon.png
