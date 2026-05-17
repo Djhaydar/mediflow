@@ -76,9 +76,12 @@ export const AppProvider = ({ children }) => {
   const addPaperTemplate     = (t)      => { const r=db.insert('paperTemplates',{...t,isDefault:false}); tick(); return r; };
   const updatePaperTemplate  = (id,ch)  => { db.update('paperTemplates',id,ch); tick(); };
   const deletePaperTemplate  = (id)     => {
-    const t=db.findOne('paperTemplates',t=>t.id===id);
-    if(t?.isDefault) return; // non supprimable
-    db.remove('paperTemplates',id); tick();
+    const all = db.get('paperTemplates');
+    // Comparaison String pour éviter tout problème de type (number vs string)
+    const found = all.find(t => String(t.id) === String(id));
+    if (!found || found.isDefault) return;
+    db.set('paperTemplates', all.filter(t => String(t.id) !== String(id)));
+    tick();
   };
 
   // Stats

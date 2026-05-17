@@ -5,7 +5,7 @@ export const db = {
   set:     (t, d)      => localStorage.setItem(PFX+t, JSON.stringify(d)),
   insert:  (t, rec)    => { const d=db.get(t); const r={...rec, id:rec.id||Date.now()+Math.floor(Math.random()*999), createdAt:new Date().toISOString()}; d.push(r); db.set(t,d); return r; },
   update:  (t, id, ch) => { const d=db.get(t); const i=d.findIndex(r=>r.id===id); if(i<0) return null; d[i]={...d[i],...ch,updatedAt:new Date().toISOString()}; db.set(t,d); return d[i]; },
-  remove:  (t, id)     => { db.set(t, db.get(t).filter(r=>r.id!==id)); },
+  remove:  (t, id)     => { db.set(t, db.get(t).filter(r=>String(r.id)!==String(id))); },
   find:    (t, fn)     => db.get(t).filter(fn),
   findOne: (t, fn)     => db.get(t).find(fn)||null,
   getOne:  (t)         => { const d=db.get(t); return d[0]||null; },

@@ -142,96 +142,113 @@ const PaperEditor = ({ tpl, onClose }) => {
   const handlePrint = () => {
     const dateStr = new Date(date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
     const s = settings;
-    const dr       = s.doctorName    || 'Dr. ___';
-    const drAr     = s.doctorNameAr  || '';
-    const spec     = s.specialty     || '';
-    const spec2    = s.specialty2    || '';
-    const specAr   = s.specialtyAr   || '';
-    const ordre    = s.orderNum      || '';
-    const addr     = s.address       || '';
-    const addrAr   = s.addressAr     || '';
-    const city     = s.city          || '';
-    const cityAr   = s.cityAr        || '';
-    const tel      = s.phone         || '';
-    const hasAr    = !!(drAr || specAr || addrAr);
+    const dr     = s.doctorName   || 'Dr. ___';
+    const drAr   = s.doctorNameAr || '';
+    const spec   = s.specialty    || '';
+    const spec2  = s.specialty2   || '';
+    const specAr = s.specialtyAr  || '';
+    const ordre  = s.orderNum     || '';
+    const addr   = s.address      || '';
+    const addrAr = s.addressAr    || '';
+    const city   = s.city         || 'Oum El Bouaghi';
+    const cityAr = s.cityAr       || '';
+    const tel    = s.phone        || '';
+    const hasAr  = !!(drAr || specAr || addrAr);
 
+    // ── En-tête bilingue identique aux vrais tampons ─────────
     const header = `
-      <table style="width:100%;border-bottom:3px double #003399;padding-bottom:12px;margin-bottom:16px;border-collapse:collapse">
+      <table style="width:100%;border-bottom:3px double #003399;padding-bottom:14px;margin-bottom:8px;border-collapse:collapse">
         <tr>
-          <td style="width:${hasAr?'55':'100'}%;vertical-align:top;padding-right:10px">
-            <div style="font-weight:bold;font-size:17px;color:#003399">${dr}</div>
-            ${spec  ? `<div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">${spec}</div>` : ''}
-            ${spec2 ? `<div style="font-size:13px;text-transform:uppercase">${spec2}</div>` : ''}
-            ${ordre ? `<div style="font-size:12px;margin-top:4px">N° d'Ordre : ${ordre}</div>` : ''}
-            ${addr  ? `<div style="font-size:12px">${addr}</div>` : ''}
-            ${city  ? `<div style="font-size:12px">${city}</div>` : ''}
-            ${tel   ? `<div style="font-size:12px">Tél : ${tel}</div>` : ''}
+          <td style="width:${hasAr?'54':'100'}%;vertical-align:top;padding-right:12px">
+            <div style="font-weight:bold;font-size:16px;color:#003399;letter-spacing:.02em">${dr}</div>
+            ${spec  ? `<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;text-decoration:underline;margin-top:2px">${spec}</div>` : ''}
+            ${spec2 ? `<div style="font-size:12px;font-weight:600;text-transform:uppercase">${spec2}</div>` : ''}
+            ${ordre ? `<div style="font-size:11px;margin-top:5px">N° d'Ordre : <strong>${ordre}</strong></div>` : ''}
+            ${addr  ? `<div style="font-size:11px">${addr}</div>` : ''}
+            ${city  ? `<div style="font-size:11px">${city}</div>` : ''}
+            ${tel   ? `<div style="font-size:11px">Tél : ${tel}</div>` : ''}
           </td>
           ${hasAr ? `
-          <td style="width:45%;vertical-align:top;text-align:right;direction:rtl;padding-left:10px;font-family:'Arial',sans-serif">
-            ${drAr   ? `<div style="font-weight:bold;font-size:17px;color:#003399">${drAr}</div>` : ''}
-            ${specAr ? `<div style="font-size:13px;font-weight:600">${specAr}</div>` : ''}
-            ${addrAr ? `<div style="font-size:12px;margin-top:4px">${addrAr}</div>` : ''}
-            ${cityAr ? `<div style="font-size:12px">${cityAr}</div>` : ''}
+          <td style="width:46%;vertical-align:top;text-align:right;direction:rtl;padding-left:12px;font-family:'Cairo','Arial',sans-serif">
+            ${drAr   ? `<div style="font-weight:bold;font-size:16px;color:#003399">${drAr}</div>` : ''}
+            ${specAr ? `<div style="font-size:12px;font-weight:700;text-decoration:underline;margin-top:2px">${specAr}</div>` : ''}
+            ${addrAr ? `<div style="font-size:11px;margin-top:5px">${addrAr}</div>` : ''}
+            ${cityAr ? `<div style="font-size:11px">${cityAr}</div>` : ''}
           </td>` : ''}
         </tr>
       </table>
-      <div style="text-align:right;font-size:12px;margin-bottom:10px">
-        ${city||'Oum El Bouaghi'}, le : ${dateStr}
+      <div style="text-align:right;font-size:12px;margin:8px 0 4px">
+        <em>${city}, le : <span style="display:inline-block;min-width:180px;border-bottom:1px solid #333">&nbsp;${dateStr}&nbsp;</span></em>
       </div>`;
 
-    const patLine = displayName
-      ? `<div style="margin-bottom:10px;font-size:13px"><strong>Nom du Malade :</strong> ${displayName}${selPatient?.age?`&nbsp;&nbsp;&nbsp;&nbsp;<strong>Age :</strong> ${selPatient.age} ans`:''}</div>`
-      : '';
+    // ── Ligne Nom du Malade / Age ─────────────────────────────
+    // Toujours affichée pour ordonnance, bilan, analyses, radio — avec pointillés si vide
+    const nameVal = displayName || '...................................................................';
+    const ageVal  = selPatient?.age ? `${selPatient.age} ans` : '................';
+    const patLine = `<div style="margin:10px 0 6px;font-size:13px;font-style:italic">
+      <strong>Nom du Malade :</strong>
+      <span style="display:inline-block;min-width:260px;border-bottom:1px dotted #333">&nbsp;${nameVal}&nbsp;</span>
+      &nbsp;&nbsp;&nbsp;
+      <strong>Age :</strong>
+      <span style="display:inline-block;min-width:60px;border-bottom:1px dotted #333">&nbsp;${ageVal}&nbsp;</span>
+    </div>`;
+
+    // patLine apparaît AVANT le titre pour ordonnance/bilan/analyses/radio
+    // Pour les certificats : le nom est dans le corps du texte
+    const patLineBeforeTitle = showMeds || showBilan || showAnal || showRadio;
 
     let body = '';
 
+    // ── Ordonnance / Renouvellement ───────────────────────────
     if(showMeds) {
       const medsHtml = meds.length > 0
-        ? meds.map((m,i)=>`<div style="padding:10px 14px;margin:8px 0;border-left:4px solid #003399;background:#f8f8ff">
-            <strong>${i+1}. ${m.name}</strong> <span style="color:#555;font-size:13px">${m.dose}</span>
-            ${m.qte ? `&nbsp;&nbsp;<span style="font-size:12px;color:#006633;font-weight:600">Qté : ${m.qte} boîte${m.qte>1?'s':''}</span>` : ''}<br>
-            <span style="font-size:12px;color:#333">${m.freq}</span>
-            ${m.dur ? `&nbsp;—&nbsp;<span style="font-size:12px;color:#555">${m.dur}</span>` : ''}
-          </div>`).join('')
-        : '<p style="color:#888;font-style:italic">Aucun médicament</p>';
+        ? meds.map((m,i)=>`
+            <div style="padding:10px 14px;margin:10px 0;border-left:4px solid #003399;background:#f8f9ff">
+              <div style="font-size:14px;font-weight:bold;color:#111">${i+1}. ${m.name} <span style="font-size:13px;color:#555;font-weight:normal">${m.dose||''}</span>
+                ${m.qte ? `<span style="font-size:12px;color:#006633;font-weight:bold;margin-left:10px">Qté : ${m.qte} boîte${Number(m.qte)>1?'s':''}</span>` : ''}
+              </div>
+              ${m.freq ? `<div style="font-size:12px;color:#333;margin-top:3px">${m.freq}${m.dur?` &mdash; ${m.dur}`:''}</div>` : ''}
+            </div>`).join('')
+        : '<p style="color:#888;font-style:italic;margin-top:20px">Aucun médicament prescrit</p>';
       body = medsHtml;
-      if(tpl.id==='renouvellement') body += `<p style="margin-top:12px">Renouvellement pour <strong>${renouvMois} mois</strong>.</p>`;
+      if(tpl.id==='renouvellement') body += `<p style="margin-top:14px">Renouvellement pour <strong>${renouvMois} mois</strong>.</p>`;
     }
 
+    // ── Arrêt de travail ──────────────────────────────────────
     if(showArret) body = `
-      <p style="margin-bottom:20px">
-        Je soussigné, Docteur en Médecine certifie que l'état de santé de
-        <strong>M / Mme : ${displayName||'............................................................'}</strong>
+      <p style="margin:18px 0 14px;line-height:1.8">
+        Je soussigné, Docteur en Médecine certifie que l'état de santé de<br>
+        <strong>M / Mme : <span style="display:inline-block;min-width:280px;border-bottom:1px solid #333">&nbsp;${displayName||''}&nbsp;</span></strong>
       </p>
-      <div style="margin:10px 0;padding:8px 0">
+      <p style="margin-bottom:8px">Numéro de Sécurité Sociale : <span style="display:inline-block;min-width:200px;border-bottom:1px dotted #555">&nbsp;</span></p>
+      <div style="margin:12px 0;line-height:2">
         <p><strong>(1)</strong> Nécessite un Traitement avec Arrêt de Travail de :
-          <strong>${nbJours||'.........'}</strong> Jours, sauf Complication<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;à dater du : ........................ au : ........................
+          <strong>&nbsp;${nbJours||'..........'}&nbsp;</strong> Jours, sauf Complication<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;à dater du : <span style="display:inline-block;min-width:100px;border-bottom:1px dotted #555">&nbsp;</span>
+          au : <span style="display:inline-block;min-width:100px;border-bottom:1px dotted #555">&nbsp;</span>
         </p>
-      </div>
-      <div style="margin:10px 0;padding:8px 0">
         <p><strong>(2)</strong> Nécessite une prolongation d'Arrêt de travail de :
-          ................... Jours, sauf Complication<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;à dater du : ........................ au : ........................
+          <span style="display:inline-block;min-width:80px;border-bottom:1px dotted #555">&nbsp;</span> Jours, sauf Complication<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;à dater du : <span style="display:inline-block;min-width:100px;border-bottom:1px dotted #555">&nbsp;</span>
+          au : <span style="display:inline-block;min-width:100px;border-bottom:1px dotted #555">&nbsp;</span>
+        </p>
+        <p><strong>(3)</strong> Nécessite un arrêt scolaire de :
+          <span style="display:inline-block;min-width:60px;border-bottom:1px dotted #555">&nbsp;</span> jours
+          à dater du : <span style="display:inline-block;min-width:80px;border-bottom:1px dotted #555">&nbsp;</span>
+          au : <span style="display:inline-block;min-width:80px;border-bottom:1px dotted #555">&nbsp;</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;une IPP de : <span style="display:inline-block;min-width:60px;border-bottom:1px dotted #555">&nbsp;</span> (pour cent)
+        </p>
+        <p><strong>(4)</strong> Lui permet de reprendre son travail ou ses cours du :
+          <span style="display:inline-block;min-width:180px;border-bottom:1px dotted #555">&nbsp;</span>
         </p>
       </div>
-      <div style="margin:10px 0;padding:8px 0">
-        <p><strong>(3)</strong> Nécessite un arrêt scolaire de : ................... jours
-          à dater du : ................. au : .................<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;une IPP de : ................... (pour cent)
-        </p>
-      </div>
-      <div style="margin:10px 0;padding:8px 0">
-        <p><strong>(4)</strong> Lui permet de reprendre son travail ou ses cours du : ..................................
-        </p>
-      </div>
-      ${motif ? `<p style="margin-top:12px;font-style:italic">Motif médical : ${motif}</p>` : ''}`;
+      ${motif ? `<p style="margin-top:10px;font-style:italic">Motif médical : ${motif}</p>` : ''}`;
 
+    // ── Certificat de santé ───────────────────────────────────
     if(tpl.id==='cert_sante') body = `
-      <p style="text-align:justify;line-height:2;margin:20px 0">
+      <p style="text-align:justify;line-height:2.2;margin:24px 0">
         Je soussigné docteur en Médecine Général Certifie avoir examiné ce jour
-        le (la) nommé(e) <strong>${displayName||'............................................................................'}</strong>
+        le (la) nommé(e) <strong><span style="display:inline-block;min-width:220px;border-bottom:1px solid #333">&nbsp;${displayName||''}&nbsp;</span></strong>
         et avoir constaté qu'il est indemne de toute maladie contagieuse et de toute affection pulmonaire.
       </p>
       <p style="text-align:justify;line-height:2">
@@ -240,7 +257,7 @@ const PaperEditor = ({ tpl, onClose }) => {
 
     if(showSport) body = `<p style="text-align:justify;line-height:2;margin:20px 0">
         Je soussigné(e) <strong>${dr}</strong>, certifie qu'il n'existe pas de contre-indication médicale à la pratique de
-        <strong>${sport||'l\'activité sportive'}</strong> pour <strong>${displayName||'___'}</strong> à la date du ${dateStr}.
+        <strong>${sport||"l'activité sportive"}</strong> pour <strong>${displayName||'___'}</strong> à la date du ${dateStr}.
       </p>`;
 
     if(showEcole) body = `<p style="text-align:justify;line-height:2;margin:20px 0">
@@ -257,35 +274,32 @@ const PaperEditor = ({ tpl, onClose }) => {
     if(showCR) body = `
       <div style="padding:12px;border:1px solid #ddd;border-radius:6px;margin:12px 0">
         <strong>Diagnostic :</strong> ${diagnostic||'—'}<br><br>
-        <div style="white-space:pre-wrap">${notes||''}</div>
+        <div style="white-space:pre-wrap;line-height:1.8">${notes||''}</div>
       </div>`;
 
     if(showAnal) body = `
-      <p><strong>Analyses demandées :</strong></p>
-      <p style="white-space:pre-wrap;padding:10px;background:#f8f8ff;border-radius:6px">${analyses||'—'}</p>`;
+      <p style="margin-top:16px"><strong>Analyses demandées :</strong></p>
+      <div style="white-space:pre-wrap;padding:12px;background:#f8f9ff;border-left:3px solid #003399;margin-top:8px;line-height:2;font-size:13px">${analyses||'—'}</div>`;
 
     if(showRadio) body = `
-      <p><strong>Examen demandé :</strong> ${typeRadio||'—'}</p>
-      <p><strong>Zone anatomique :</strong> ${zone||'—'}</p>`;
+      <p style="margin-top:16px"><strong>Examen demandé :</strong> <span style="display:inline-block;min-width:200px;border-bottom:1px solid #333">&nbsp;${typeRadio||''}&nbsp;</span></p>
+      <p style="margin-top:10px"><strong>Zone anatomique :</strong> <span style="display:inline-block;min-width:200px;border-bottom:1px solid #333">&nbsp;${zone||''}&nbsp;</span></p>`;
 
+    // ── Bilan biologique ──────────────────────────────────────
     if(showBilan) {
-      const selected = bilanSel.length > 0 ? bilanSel : [];
+      const selected = bilanSel;
       const half = Math.ceil(BILAN_TESTS.length / 2);
       const left  = BILAN_TESTS.slice(0, half);
       const right = BILAN_TESTS.slice(half);
       const testRow = (t) => {
         const checked = selected.includes(t);
-        return `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:12px">
-          <span style="display:inline-block;width:14px;height:14px;border:1.5px solid #333;border-radius:2px;text-align:center;line-height:13px;font-size:11px;font-weight:bold">${checked?'✓':''}</span>
-          <span>${t}</span>
+        return `<div style="display:flex;align-items:center;gap:6px;padding:4px 2px;font-size:12px">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border:1.5px solid #003399;border-radius:2px;flex-shrink:0;font-size:11px;font-weight:bold;color:#003399">${checked?'✓':''}</span>
+          <span style="font-weight:${checked?'bold':'normal'}">${t}</span>
         </div>`;
       };
       body = `
-        <div style="text-align:center;margin:16px 0">
-          <div style="font-size:22px;font-weight:bold;letter-spacing:.1em">BILAN</div>
-          <div style="font-size:14px;font-style:italic;margin-top:4px">— Prière de faire —</div>
-        </div>
-        <table style="width:100%;border-collapse:collapse">
+        <table style="width:100%;border-collapse:collapse;margin-top:8px">
           <tr>
             <td style="width:50%;vertical-align:top;padding-right:20px;border-right:1px solid #ccc">
               ${left.map(testRow).join('')}
@@ -297,22 +311,36 @@ const PaperEditor = ({ tpl, onClose }) => {
         </table>`;
     }
 
-    if(!body) body = `<p style="white-space:pre-wrap">${notes||''}</p>`;
-    if(notes && !showCR && !showAnal && !showRadio && !showBilan) {
+    if(!body) body = `<p style="white-space:pre-wrap;line-height:1.8">${notes||''}</p>`;
+    if(notes && !showCR && !showAnal && !showRadio && !showBilan && !showMeds) {
       body += `<br><p style="color:#555;font-style:italic;font-size:12px">Notes : ${notes}</p>`;
     }
 
-    const title = showBilan ? '' : `<h3 style="text-align:center;font-size:18px;letter-spacing:.08em;text-transform:uppercase;margin:16px 0 12px;border-bottom:1px solid #aaa;padding-bottom:8px">${tpl.name}</h3>`;
-    const footer = `<div style="margin-top:50px;text-align:right"><div style="display:inline-block;border-top:1px solid #333;padding-top:8px;min-width:180px;text-align:center;font-size:12px">Signature &amp; Cachet</div></div>`;
+    // ── Titre centré, gras, souligné ─────────────────────────
+    const titleHtml = showBilan
+      ? `<div style="text-align:center;margin:18px 0 14px">
+           <div style="font-size:24px;font-weight:bold;letter-spacing:.12em;color:#003399">BILAN</div>
+           <div style="font-size:13px;font-style:italic;margin-top:4px">— Prière de faire —</div>
+         </div>`
+      : `<h3 style="text-align:center;font-size:17px;font-weight:bold;letter-spacing:.1em;text-transform:uppercase;margin:18px 0 14px;border-bottom:2px solid #003399;padding-bottom:8px;color:#111">${tpl.name}</h3>`;
+
+    const footer = `<div style="margin-top:50px;display:flex;justify-content:flex-end">
+      <div style="text-align:center;min-width:180px;border-top:1px solid #333;padding-top:8px;font-size:12px">Signature &amp; Cachet</div>
+    </div>`;
+
+    // ── Assemblage final ──────────────────────────────────────
+    const htmlBody = patLineBeforeTitle
+      ? `${patLine}${titleHtml}${body}`
+      : `${titleHtml}${body}`;
 
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${tpl.name}</title>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
-        body{font-family:Arial,sans-serif;padding:36px 42px;max-width:720px;margin:auto;color:#111;}
+        body{font-family:Arial,sans-serif;padding:32px 40px;max-width:720px;margin:auto;color:#111;font-size:13px;}
         p{margin:6px 0;line-height:1.7;}
-        @media print{body{padding:20px 30px;}}
+        @media print{body{padding:18px 28px;}@page{margin:1cm;}}
       </style>
-    </head><body>${header}${title}${patLine}${body}${footer}</body></html>`;
+    </head><body>${header}${htmlBody}${footer}</body></html>`;
 
     // Impression via iframe caché (fonctionne dans Electron et navigateur)
     const iframe = document.createElement('iframe');

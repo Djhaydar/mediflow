@@ -41,7 +41,7 @@ export const Card = ({ children, style={}, className='', onClick }) => (
 export const Modal = ({ open, onClose, title, children, width=520 }) => {
   if (!open) return null;
   return (
-    <div style={{ position:'fixed', inset:0, zIndex:1000, background:'rgba(0,0,0,0.65)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center' }} onClick={onClose}>
+    <div style={{ position:'fixed', inset:0, zIndex:9999, background:'rgba(0,0,0,0.65)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center' }} onClick={onClose}>
       <div style={{ background:T.surface, border:`1px solid ${T.border}`, borderRadius:18, padding:28, width, maxWidth:'calc(100vw - 40px)', maxHeight:'calc(100vh - 60px)', overflowY:'auto', boxShadow:'0 24px 80px rgba(0,0,0,0.6)' }} onClick={e=>e.stopPropagation()}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
           <div style={{ fontFamily:'Syne, sans-serif', fontWeight:700, fontSize:16, color:T.text }}>{title}</div>
