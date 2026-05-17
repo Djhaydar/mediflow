@@ -15,6 +15,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Ouvrir un lien dans le navigateur système (pas dans Electron)
   openExternal: (url) => ipcRenderer.send('open-external', url),
 
+  // Lister les imprimantes disponibles
+  getPrinters: () => ipcRenderer.invoke('get-printers'),
+
   // Retirer les écouteurs (cleanup React)
   removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),
 });

@@ -130,6 +130,7 @@ const SettingsPage = () => {
   const [resetModal, setReset] = useState(false);
   const [pinModal, setPinModal]= useState(false);
   const [medModal, setMedModal]= useState(false);
+  const [printerList, setPrinterList] = useState([]);
   const s = getSettings();
 
   // Local state for cabinet text fields — saves on blur, no re-render per keystroke
@@ -247,8 +248,27 @@ const SettingsPage = () => {
             </Section>
 
             <Section title={t('settings.sec.printer')}>
-              <Row label={t('lbl.printer')}>
-                <input style={inputSm} value={s.printerName||''} onChange={e=>upd('printerName',e.target.value)} placeholder={t('ph.printer')} />
+              <Row label={t('lbl.printer')} sub={s.printerName ? `Sélectionnée : ${s.printerName}` : 'Aucune imprimante sélectionnée'}>
+                <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                  {printerList.length > 0 ? (
+                    <select style={{ ...inputSm, minWidth:200 }}
+                      value={s.printerName||''}
+                      onChange={e=>upd('printerName', e.target.value)}>
+                      <option value="">— Utiliser la boîte de dialogue système —</option>
+                      {printerList.map(p=><option key={p.name} value={p.name}>{p.name}</option>)}
+                    </select>
+                  ) : (
+                    <input style={{ ...inputSm, minWidth:180 }} value={s.printerName||''} onChange={e=>upd('printerName',e.target.value)} placeholder={t('ph.printer')} />
+                  )}
+                  {window.electronAPI && (
+                    <button onClick={async ()=>{
+                      const list = await window.electronAPI.getPrinters();
+                      setPrinterList(list||[]);
+                    }} style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:7, padding:'6px 12px', cursor:'pointer', fontSize:12, color:T.textSub, whiteSpace:'nowrap' }}>
+                      🖨️ Détecter
+                    </button>
+                  )}
+                </div>
               </Row>
               <Row label={t('lbl.paperFormat')}>
                 <select style={inputSm} value={s.printerFormat||'A4'} onChange={e=>upd('printerFormat',e.target.value)}>

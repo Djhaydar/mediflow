@@ -116,6 +116,12 @@ ipcMain.on('check-updates', () => {
 // Retourner la version courante de l'app
 ipcMain.handle('get-version', () => app.getVersion());
 
+// Lister les imprimantes disponibles
+ipcMain.handle('get-printers', () => {
+  if (!mainWindow) return [];
+  try { return mainWindow.webContents.getPrinters(); } catch { return []; }
+});
+
 // ─────────────────────────────────────────────────────────────
 //  Lifecycle
 // ─────────────────────────────────────────────────────────────

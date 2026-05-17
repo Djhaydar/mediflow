@@ -103,6 +103,7 @@ const PaperEditor = ({ tpl, onClose }) => {
   const [medFreq, setMedFreq]= useState('');
   const [medDur, setMedDur]= useState('');
   const [medQte, setMedQte]= useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   // specific fields
   const [nbJours, setNbJours] = useState('');
   const [motif, setMotif]   = useState('');
@@ -119,12 +120,12 @@ const PaperEditor = ({ tpl, onClose }) => {
   const selPatient = patients.find(p=>p.id===Number(patientId));
   const displayName = selPatient ? `${selPatient.firstName} ${selPatient.lastName}` : patientName;
 
-  const filteredMeds = medQ.length>1 ? allMeds.filter(m=>m.nom.toLowerCase().includes(medQ.toLowerCase())||m.dci.toLowerCase().includes(medQ.toLowerCase())).slice(0,6) : [];
+  const filteredMeds = (dropdownOpen && medQ.length>1) ? allMeds.filter(m=>m.nom.toLowerCase().includes(medQ.toLowerCase())||m.dci.toLowerCase().includes(medQ.toLowerCase())).slice(0,6) : [];
 
   const addMed = () => {
     if(!medSel) return;
     setMeds(ms=>[...ms,{name:medSel.nom,dci:medSel.dci,dose:medDose||medSel.dosage,freq:medFreq||medSel.posologie,dur:medDur,qte:medQte}]);
-    setMedSel(null);setMedQ('');setMedDose('');setMedFreq('');setMedDur('');setMedQte('');
+    setMedSel(null);setMedQ('');setMedDose('');setMedFreq('');setMedDur('');setMedQte('');setDropdownOpen(false);
   };
 
   const showMeds  = tpl.id==='ordonnance'||tpl.id==='renouvellement';
@@ -313,10 +314,15 @@ const PaperEditor = ({ tpl, onClose }) => {
       </style>
     </head><body>${header}${title}${patLine}${body}${footer}</body></html>`;
 
-    const w = window.open('','_blank');
-    w.document.write(html);
-    w.document.close();
-    w.print();
+    // Impression via iframe caché (fonctionne dans Electron et navigateur)
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:0;height:0;border:none;opacity:0;';
+    document.body.appendChild(iframe);
+    iframe.srcdoc = html;
+    setTimeout(() => {
+      try { iframe.contentWindow?.print(); } catch(e) { console.error('Print error', e); }
+      setTimeout(() => { if(document.body.contains(iframe)) document.body.removeChild(iframe); }, 3000);
+    }, 600);
 
     if(selPatient?.id) {
       addDocument({ patientId:selPatient.id, type:tpl.name, title:`${tpl.name} — ${date}`, date, notes });
@@ -351,11 +357,11 @@ const PaperEditor = ({ tpl, onClose }) => {
           <div style={{ marginBottom:16 }}>
             <div style={{ fontSize:12, color:T.textSub, fontWeight:600, marginBottom:10 }}>Médicaments</div>
             <div style={{ position:'relative', marginBottom:8 }}>
-              <input className="input-base" value={medQ} onChange={e=>{setMedQ(e.target.value);setMedSel(null);}} placeholder="Rechercher un médicament..." />
+              <input className="input-base" value={medQ} onChange={e=>{setMedQ(e.target.value);setMedSel(null);setDropdownOpen(true);}} placeholder="Rechercher un médicament..." />
               {filteredMeds.length>0&&(
                 <div style={{ position:'absolute', top:'100%', left:0, right:0, background:T.surface, border:`1px solid ${T.border}`, borderRadius:10, zIndex:99, boxShadow:'0 8px 24px rgba(0,0,0,0.4)', overflow:'hidden' }}>
                   {filteredMeds.map(m=>(
-                    <div key={m.id} className="hover-card" onClick={()=>{setMedSel(m);setMedQ(m.nom);setMedDose(m.dosage);setMedFreq(m.posologie);}} style={{ padding:'8px 12px', cursor:'pointer', borderBottom:`1px solid ${T.border}` }}>
+                    <div key={m.id} className="hover-card" onClick={()=>{setMedSel(m);setMedQ(m.nom);setMedDose(m.dosage);setMedFreq(m.posologie);setDropdownOpen(false);}} style={{ padding:'8px 12px', cursor:'pointer', borderBottom:`1px solid ${T.border}` }}>
                       <span style={{ fontSize:12, fontWeight:600, color:T.text }}>{m.nom}</span> <span style={{ fontSize:11, color:T.purple }}>{m.dosage}</span>
                     </div>
                   ))}
@@ -487,7 +493,7 @@ const PaperEditor = ({ tpl, onClose }) => {
           <div style={{ fontFamily:'Syne, sans-serif', fontWeight:700, fontSize:12, color:T.text, marginBottom:8 }}>Médicaments favoris</div>
           {allMeds.filter(m=>m.favorite).slice(0,8).map(m=>(
             <div key={m.id} className="hover-card"
-              onClick={()=>{ if(showMeds){setMedSel(m);setMedQ(m.nom);setMedDose(m.dosage);setMedFreq(m.posologie);setMedDur('');setMedQte('');} }}
+              onClick={()=>{ if(showMeds){setMedSel(m);setMedQ(m.nom);setMedDose(m.dosage);setMedFreq(m.posologie);setMedDur('');setMedQte('');setDropdownOpen(false);} }}
               style={{ display:'flex', justifyContent:'space-between', padding:'6px 8px', borderRadius:7, marginBottom:3, cursor:showMeds?'pointer':'default' }}>
               <span style={{ fontSize:11, color:T.textSub }}>{m.nom} {m.dosage}</span>
               {showMeds&&<Icon name="plus" size={12} color={T.teal} />}
@@ -538,7 +544,7 @@ const PapierPage = () => {
         ))}
       </div>
 
-      <TemplateModal open={addModal} onClose={()=>{setAddModal(false);setEditTpl(null);}}
+      <TemplateModal key={editTpl?.id||'new'} open={addModal} onClose={()=>{setAddModal(false);setEditTpl(null);}}
         onSave={editTpl?data=>updatePaperTemplate(editTpl.id,data):addPaperTemplate}
         tpl={editTpl} />
       <ConfirmDialog open={!!delTpl} onClose={()=>setDelTpl(null)}

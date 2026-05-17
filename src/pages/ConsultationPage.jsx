@@ -7,31 +7,59 @@ import { toDateStr } from '../db/database';
 
 const STEPS = ['Motif','Examen clinique','Diagnostic','Ordonnance','Clôture'];
 
+const FREQ_QUICK = ['1×/j','2×/j','3×/j','Matin','Soir','Matin + Soir','Si besoin'];
+const DUR_QUICK  = ['3 jours','5 jours','7 jours','10 jours','14 jours','1 mois','3 mois','6 mois','Long terme'];
+
+const COMMON_DIAGNOSES = [
+  'Rhinopharyngite aiguë','Angine','Amygdalite','Bronchite aiguë','Bronchiolite',
+  'Pneumonie','Grippe','Sinusite aiguë','Otite moyenne aiguë','Laryngite',
+  'Gastro-entérite aiguë','Gastrite','Reflux gastro-œsophagien','Colite','Constipation',
+  'Hypertension artérielle','Insuffisance cardiaque','Palpitations','Tachycardie',
+  'Diabète type 1','Diabète type 2','Hypoglycémie','Dyslipidémie','Obésité',
+  'Migraine','Céphalée de tension','Vertiges','Malaise vagal',
+  'Lombalgie aiguë','Lombalgie chronique','Cervicalgie','Sciatique','Arthrose',
+  'Entorse','Fracture','Contusion','Traumatisme crânien','Plaie',
+  'Cystite','Infection urinaire','Calcul rénal','Prostatite',
+  'Dermatite','Urticaire','Eczéma','Psoriasis','Infection cutanée','Zona',
+  'Anémie','Hypothyroïdie','Hyperthyroïdie','Allergie saisonnière','Asthme','BPCO',
+  'Anxiété','Dépression','Insomnie','Burn-out','Stress chronique',
+  'Conjonctivite','Blépharite','Corps étranger oculaire',
+];
+
+// ── MedSearch enrichi ─────────────────────────────────────
 const MedSearch = ({ onAdd }) => {
   const { getMedications } = useApp();
-  const [q, setQ] = useState('');
-  const [sel, setSel] = useState(null);
-  const [dose, setDose] = useState('');
-  const [freq, setFreq] = useState('');
-  const [dur, setDur]   = useState('30 jours');
+  const [q, setQ]           = useState('');
+  const [sel, setSel]       = useState(null);
+  const [dose, setDose]     = useState('');
+  const [freq, setFreq]     = useState('');
+  const [dur, setDur]       = useState('');
+  const [qte, setQte]       = useState('');
+  const [dropOpen, setDropOpen] = useState(false);
   const meds = getMedications();
-  const filtered = q.length>1 ? meds.filter(m=>m.nom.toLowerCase().includes(q.toLowerCase())||m.dci.toLowerCase().includes(q.toLowerCase())).slice(0,6) : [];
+  const filtered = (dropOpen && q.length>1)
+    ? meds.filter(m=>m.nom.toLowerCase().includes(q.toLowerCase())||m.dci.toLowerCase().includes(q.toLowerCase())).slice(0,6)
+    : [];
 
   const handleAdd = () => {
     if(!sel) return;
-    onAdd({ name:sel.nom, dci:sel.dci, dose:dose||sel.dosage, freq:freq||sel.posologie, dur });
-    setSel(null);setQ('');setDose('');setFreq('');
+    onAdd({ name:sel.nom, dci:sel.dci, dose:dose||sel.dosage, freq:freq||sel.posologie, dur, qte });
+    setSel(null);setQ('');setDose('');setFreq('');setDur('');setQte('');setDropOpen(false);
   };
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+      {/* Recherche */}
       <div style={{ position:'relative' }}>
         <Icon name="search" size={13} color={T.textMuted} style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)' }} />
-        <input className="input-base" value={q} onChange={e=>{setQ(e.target.value);setSel(null);}} placeholder="Rechercher un médicament..." style={{ paddingLeft:30, fontSize:12 }} />
+        <input className="input-base" value={q}
+          onChange={e=>{setQ(e.target.value);setSel(null);setDropOpen(true);}}
+          placeholder="Rechercher un médicament..." style={{ paddingLeft:30, fontSize:12 }} />
         {filtered.length>0&&(
           <div style={{ position:'absolute', top:'100%', left:0, right:0, background:T.surface, border:`1px solid ${T.border}`, borderRadius:10, overflow:'hidden', zIndex:99, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
             {filtered.map(m=>(
-              <div key={m.id} className="hover-card" onClick={()=>{setSel(m);setQ(m.nom);setDose(m.dosage);setFreq(m.posologie);}}
+              <div key={m.id} className="hover-card"
+                onClick={()=>{setSel(m);setQ(m.nom);setDose(m.dosage);setFreq(m.posologie);setDropOpen(false);}}
                 style={{ padding:'8px 12px', cursor:'pointer', borderBottom:`1px solid ${T.border}` }}>
                 <div style={{ fontSize:12, fontWeight:600, color:T.text }}>{m.nom} <span style={{ color:T.purple }}>{m.dosage}</span></div>
                 <div style={{ fontSize:10, color:T.textMuted }}>{m.dci} · {m.classe}</div>
@@ -40,14 +68,103 @@ const MedSearch = ({ onAdd }) => {
           </div>
         )}
       </div>
+
       {sel&&(
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr auto', gap:8, alignItems:'center' }}>
-          <input className="input-base" value={dose} onChange={e=>setDose(e.target.value)} placeholder="Dose" style={{ fontSize:12 }} />
-          <input className="input-base" value={freq} onChange={e=>setFreq(e.target.value)} placeholder="Fréquence" style={{ fontSize:12 }} />
-          <input className="input-base" value={dur} onChange={e=>setDur(e.target.value)} placeholder="Durée" style={{ fontSize:12 }} />
-          <button onClick={handleAdd} style={{ background:T.teal, border:'none', borderRadius:7, padding:'8px 14px', cursor:'pointer', color:'#000', fontWeight:600, fontSize:12, whiteSpace:'nowrap' }}>+ Ajouter</button>
+        <div style={{ background:`${T.purple}0a`, border:`1px solid ${T.purple}33`, borderRadius:10, padding:12 }}>
+          {/* Dose + Qté */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 110px', gap:8, marginBottom:8 }}>
+            <div>
+              <label style={{ fontSize:11, color:T.textMuted, display:'block', marginBottom:4 }}>Dosage</label>
+              <input className="input-base" value={dose} onChange={e=>setDose(e.target.value)} placeholder={sel.dosage} style={{ fontSize:12 }} />
+            </div>
+            <div>
+              <label style={{ fontSize:11, color:T.textMuted, display:'block', marginBottom:4 }}>Qté (boîtes)</label>
+              <input type="number" min="1" className="input-base" value={qte} onChange={e=>setQte(e.target.value)} placeholder="1" style={{ fontSize:12 }} />
+            </div>
+          </div>
+
+          {/* Quick Fréquence */}
+          <div style={{ marginBottom:8 }}>
+            <label style={{ fontSize:11, color:T.textMuted, display:'block', marginBottom:4 }}>Fréquence</label>
+            <div style={{ display:'flex', flexWrap:'wrap', gap:4, marginBottom:5 }}>
+              {FREQ_QUICK.map(f=>(
+                <button key={f} onClick={()=>setFreq(f)} style={{ fontSize:11, padding:'3px 9px', borderRadius:6, cursor:'pointer', border:`1px solid ${freq===f?T.purple:T.border}`, background:freq===f?T.purple:T.card, color:freq===f?'#fff':T.textSub, transition:'all 0.15s' }}>{f}</button>
+              ))}
+            </div>
+            <input className="input-base" value={freq} onChange={e=>setFreq(e.target.value)} placeholder="Ou saisir manuellement..." style={{ fontSize:12 }} />
+          </div>
+
+          {/* Quick Durée */}
+          <div style={{ marginBottom:10 }}>
+            <label style={{ fontSize:11, color:T.textMuted, display:'block', marginBottom:4 }}>Durée</label>
+            <div style={{ display:'flex', flexWrap:'wrap', gap:4, marginBottom:5 }}>
+              {DUR_QUICK.map(d=>(
+                <button key={d} onClick={()=>setDur(d)} style={{ fontSize:11, padding:'3px 9px', borderRadius:6, cursor:'pointer', border:`1px solid ${dur===d?T.teal:T.border}`, background:dur===d?T.teal:T.card, color:dur===d?'#000':T.textSub, transition:'all 0.15s' }}>{d}</button>
+              ))}
+            </div>
+            <input className="input-base" value={dur} onChange={e=>setDur(e.target.value)} placeholder="Ou saisir manuellement..." style={{ fontSize:12 }} />
+          </div>
+
+          <button onClick={handleAdd} style={{ width:'100%', background:T.purple, border:'none', borderRadius:7, padding:'9px', cursor:'pointer', color:'#fff', fontWeight:700, fontSize:13, display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
+            <span style={{ fontSize:16, lineHeight:1 }}>+</span> Ajouter à l'ordonnance
+          </button>
         </div>
       )}
+    </div>
+  );
+};
+
+// ── Diagnostic avec cases à cocher ────────────────────────
+const DiagnosticStep = ({ selected, setSelected, custom, setCustom }) => {
+  const [search, setSearch] = useState('');
+  const shown = search.length > 1
+    ? COMMON_DIAGNOSES.filter(d => d.toLowerCase().includes(search.toLowerCase()))
+    : COMMON_DIAGNOSES;
+
+  const toggle = (d) => setSelected(s => s.includes(d) ? s.filter(x=>x!==d) : [...s, d]);
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+      {/* Recherche diagnostic */}
+      <div style={{ position:'relative' }}>
+        <Icon name="search" size={13} color={T.textMuted} style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)' }} />
+        <input className="input-base" value={search} onChange={e=>setSearch(e.target.value)}
+          placeholder="Filtrer les diagnostics..." style={{ paddingLeft:30, fontSize:12 }} />
+      </div>
+
+      {/* Sélectionnés */}
+      {selected.length>0&&(
+        <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+          {selected.map(d=>(
+            <div key={d} style={{ display:'flex', alignItems:'center', gap:5, background:T.tealDim, border:`1px solid ${T.borderAccent}`, borderRadius:20, padding:'3px 10px', fontSize:11, color:T.teal }}>
+              {d}
+              <button onClick={()=>toggle(d)} style={{ background:'none', border:'none', cursor:'pointer', color:T.teal, padding:0, lineHeight:1, fontSize:13 }}>×</button>
+            </div>
+          ))}
+          <button onClick={()=>setSelected([])} style={{ fontSize:10, color:T.textMuted, background:'none', border:`1px solid ${T.border}`, borderRadius:20, padding:'3px 10px', cursor:'pointer' }}>Tout effacer</button>
+        </div>
+      )}
+
+      {/* Liste des diagnostics */}
+      <div style={{ background:T.card, border:`1px solid ${T.border}`, borderRadius:12, padding:12, maxHeight:260, overflowY:'auto' }}>
+        <div style={{ columns:2, columnGap:12 }}>
+          {shown.map(d=>(
+            <div key={d} onClick={()=>toggle(d)}
+              style={{ display:'flex', alignItems:'center', gap:7, padding:'5px 6px', borderRadius:7, cursor:'pointer', marginBottom:2, background:selected.includes(d)?T.tealDim:'transparent', breakInside:'avoid', transition:'background 0.15s' }}>
+              <div style={{ width:16, height:16, borderRadius:4, border:`2px solid ${selected.includes(d)?T.teal:T.border}`, background:selected.includes(d)?T.teal:'transparent', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.15s' }}>
+                {selected.includes(d)&&<span style={{ color:'#000', fontSize:10, fontWeight:700, lineHeight:1 }}>✓</span>}
+              </div>
+              <span style={{ fontSize:11, color:selected.includes(d)?T.teal:T.textSub }}>{d}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Diagnostic libre / complémentaire */}
+      <Field label="Précisions / Diagnostic complémentaire">
+        <textarea rows={3} className="input-base" value={custom} onChange={e=>setCustom(e.target.value)}
+          placeholder="Détails, diagnostics différentiels, observations..." style={{ resize:'vertical', fontSize:12 }} />
+      </Field>
     </div>
   );
 };
@@ -68,7 +185,9 @@ const ConsultationPage = () => {
   const [taille, setTaille]   = useState('');
   const [spo2, setSpo2]       = useState('');
   const [examenNotes, setExN] = useState('');
-  const [diagnostic, setDiag] = useState('');
+  // Diagnostic : checkboxes + texte libre
+  const [diagSelected, setDiagSelected] = useState([]);
+  const [diagCustom, setDiagCustom]     = useState('');
   const [meds, setMeds]       = useState([]);
   const [notes, setNotes]     = useState('');
   const [montant, setMontant] = useState('');
@@ -81,13 +200,16 @@ const ConsultationPage = () => {
   const selPatient = patients.find(p=>p.id===Number(patientId));
   const displayName = selPatient ? `${selPatient.firstName} ${selPatient.lastName}` : patientName;
 
+  // Diagnostic final = checkboxes + texte libre
+  const buildDiagnostic = () => [...diagSelected, diagCustom].filter(Boolean).join(' — ');
+
   const handleFinish = () => {
-    // Auto-register patient if name only
     let pid = selPatient?.id || null;
     if (!pid && patientName.trim()) {
       const reg = ensurePatient(patientName.trim());
       pid = reg?.id || null;
     }
+    const diagnostic = buildDiagnostic();
 
     addConsultation({
       patientId: pid, patientName: displayName, date: toDateStr(),
@@ -101,7 +223,6 @@ const ConsultationPage = () => {
       addPayment({ date:toDateStr(), patientName:displayName, patientId:pid, amount:Number(montant), type:'Consultation', description:diagnostic||motif, statut:'Payé' });
     }
 
-    // Update RDV if matching
     const rdvMatch = todayRdv.find(r=>(r.patientId&&r.patientId===pid)||(r.patientName?.toLowerCase()===displayName.toLowerCase()));
     if (rdvMatch) updateRdv(rdvMatch.id, { statut:'Consultation terminée' });
 
@@ -111,7 +232,7 @@ const ConsultationPage = () => {
   const reset = () => {
     setStep(0);setPatientId('');setPatientName('');setMotif('');setDuree('');setAgg('');setAnte('');
     setTa('');setFc('');setTemp('');setPoids('');setTaille('');setSpo2('');setExN('');
-    setDiag('');setMeds([]);setNotes('');setMontant('');setDone(false);
+    setDiagSelected([]);setDiagCustom('');setMeds([]);setNotes('');setMontant('');setDone(false);
   };
 
   if (done) {
@@ -211,9 +332,10 @@ const ConsultationPage = () => {
         )}
 
         {step===2&&(
-          <Field label="Diagnostic principal">
-            <textarea rows={8} className="input-base" value={diagnostic} onChange={e=>setDiag(e.target.value)} placeholder="Diagnostic principal et différentiels..." style={{ resize:'vertical' }} />
-          </Field>
+          <DiagnosticStep
+            selected={diagSelected} setSelected={setDiagSelected}
+            custom={diagCustom} setCustom={setDiagCustom}
+          />
         )}
 
         {step===3&&(
@@ -227,8 +349,10 @@ const ConsultationPage = () => {
                       <Icon name="pill" size={14} color={T.purple} />
                     </div>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, fontWeight:600, color:T.text }}>{m.name} <span style={{ color:T.purple }}>{m.dose}</span></div>
-                      <div style={{ fontSize:11, color:T.textMuted }}>{m.freq} — {m.dur}</div>
+                      <div style={{ fontSize:13, fontWeight:600, color:T.text }}>{m.name} <span style={{ color:T.purple }}>{m.dose}</span>
+                        {m.qte&&<span style={{ fontSize:11, color:T.teal, marginLeft:8 }}>• {m.qte} boîte{m.qte>1?'s':''}</span>}
+                      </div>
+                      <div style={{ fontSize:11, color:T.textMuted }}>{m.freq}{m.dur?` — ${m.dur}`:''}</div>
                     </div>
                     <button onClick={()=>setMeds(ms=>ms.filter((_,j)=>j!==i))} style={{ background:'none', border:'none', cursor:'pointer', color:T.red, padding:4 }}>
                       <Icon name="close" size={13} color={T.red} />
@@ -245,7 +369,13 @@ const ConsultationPage = () => {
           <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
             <div style={{ background:T.tealDim, border:`1px solid ${T.borderAccent}`, borderRadius:12, padding:16 }}>
               <div style={{ fontWeight:600, fontSize:13, color:T.teal, marginBottom:10 }}>Résumé</div>
-              {[['Patient',displayName||'—'],['Date',toDateStr()],['Motif',motif||'—'],['Diagnostic',diagnostic||'—'],['Médicaments',meds.length>0?meds.map(m=>`${m.name} ${m.dose}`).join(', '):'Aucun']].map(([k,v])=>(
+              {[
+                ['Patient',displayName||'—'],
+                ['Date',toDateStr()],
+                ['Motif',motif||'—'],
+                ['Diagnostic', buildDiagnostic()||'—'],
+                ['Médicaments',meds.length>0?meds.map(m=>`${m.name} ${m.dose}`).join(', '):'Aucun'],
+              ].map(([k,v])=>(
                 <div key={k} style={{ display:'flex', gap:12, marginBottom:6 }}>
                   <span style={{ fontSize:12, color:T.textMuted, minWidth:120 }}>{k}</span>
                   <span style={{ fontSize:12, color:T.text, fontWeight:500 }}>{v}</span>
