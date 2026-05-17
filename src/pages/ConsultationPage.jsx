@@ -3,7 +3,7 @@ import { T } from '../theme';
 import Icon from '../components/Icon';
 import { Card, Field, Empty } from '../components/UI';
 import { useApp } from '../context/AppContext';
-import { toDateStr } from '../db/database';
+import { toDateStr, searchMeds } from '../db/database';
 
 const STEPS = ['Motif','Examen clinique','Diagnostic','Ordonnance','Clôture'];
 
@@ -37,9 +37,7 @@ const MedSearch = ({ onAdd }) => {
   const [qte, setQte]       = useState('');
   const [dropOpen, setDropOpen] = useState(false);
   const meds = getMedications();
-  const filtered = (dropOpen && q.length>1)
-    ? meds.filter(m=>m.nom.toLowerCase().includes(q.toLowerCase())||m.dci.toLowerCase().includes(q.toLowerCase())).slice(0,6)
-    : [];
+  const filtered = (dropOpen && q.length>1) ? searchMeds(meds, q, 8) : [];
 
   const handleAdd = () => {
     if(!sel) return;

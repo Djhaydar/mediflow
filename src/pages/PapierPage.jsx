@@ -3,6 +3,7 @@ import { T } from '../theme';
 import Icon from '../components/Icon';
 import { Card, Modal, Field, ConfirmDialog, Empty } from '../components/UI';
 import { useApp } from '../context/AppContext';
+import { searchMeds } from '../db/database';
 import { toDateStr, ICON_EMOJIS, COLORS_PICK, BILAN_TESTS } from '../db/database';
 
 // ── Template CRUD Modal ───────────────────────────────────
@@ -120,7 +121,7 @@ const PaperEditor = ({ tpl, onClose }) => {
   const selPatient = patients.find(p=>p.id===Number(patientId));
   const displayName = selPatient ? `${selPatient.firstName} ${selPatient.lastName}` : patientName;
 
-  const filteredMeds = (dropdownOpen && medQ.length>1) ? allMeds.filter(m=>m.nom.toLowerCase().includes(medQ.toLowerCase())||m.dci.toLowerCase().includes(medQ.toLowerCase())).slice(0,6) : [];
+  const filteredMeds = (dropdownOpen && medQ.length>1) ? searchMeds(allMeds, medQ, 8) : [];
 
   const addMed = () => {
     if(!medSel) return;
